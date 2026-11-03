@@ -3,7 +3,8 @@
   'use strict';
   const $ = (s, r = document) => r.querySelector(s);
   const IN = 'en-IN';
-  const REFRESH_MS = 60_000;
+  const WORKER = String((window.MARKET_PULSE || {}).workerUrl || '').replace(/\/$/, '');
+  const REFRESH_MS = WORKER ? 30_000 : 60_000;
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const ok = n => n !== null && n !== undefined && !Number.isNaN(Number(n));
   const nf = (n, d = 2) => ok(n) ? Number(n).toLocaleString(IN, { minimumFractionDigits: d, maximumFractionDigits: d }) : '—';
@@ -32,18 +33,33 @@
   let snap = null, chartKey = 'nifty', moverKey = 'gainers', lastErr = null;
 
   /* ---------- data ---------- */
+  async function fetchJson(url, ms) {
+    const ac = new AbortController(), t = setTimeout(() => ac.abort(), ms);
+    try {
+      const r = await fetch(url, { cache: 'no-store', signal: ac.signal });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return await r.json();
+    } finally { clearTimeout(t); }
+  }
+  let loading = false;
   async function load(manual) {
+    if (loading) return;
+    loading = true;
     const btn = $('#refresh');
     if (manual) btn.textContent = 'Refreshing…';
-    try {
-      const r = await fetch('data/snapshot.json?t=' + Date.now(), { cache: 'no-store' });
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      snap = await r.json();
-      lastErr = null;
-    } catch (e) {
-      lastErr = e;
+    let next = null, err = null;
+    if (WORKER) {  // live proxy first; fall back to the scheduled snapshot if it is down
+      try { next = await fetchJson(WORKER + '/snapshot', 15000); } catch (e) { err = e; }
     }
+    if (!next) {
+      try {
+        next = await fetchJson('data/snapshot.json?t=' + Date.now(), 10000);
+        if (WORKER) next.fallback = true;
+      } catch (e) { err = err || e; }
+    }
+    if (next) { snap = next; lastErr = null; } else { lastErr = err; }  // keep the last good data on failure
     btn.textContent = 'Refresh';
+    loading = false;
     render();
   }
 
@@ -73,9 +89,19 @@
     const stale = open && age > 15;
     el.className = 'badge ' + (stale ? 'stale' : open ? 'open' : 'closed');
     el.lastElementChild.textContent = stale ? 'Open · delayed' : (open ? 'Market open' : 'Market closed');
-    const ep = snap.generatedEpoch;
+    const ep = snap.generatedEpoch, src = snap.sourceEpoch;
     const ago = age < 1 ? 'just now' : age < 90 ? Math.round(age) + ' min ago' : Math.round(age / 60) + ' h ago';
-    as.textContent = `Snapshot ${tIST(ep)} IST · ${dIST(ep)} · updated ${ago}` + (snap.demo ? ' · DEMO DATA' : '');
+    const via = snap.via === 'worker' ? 'live proxy' : snap.fallback ? 'scheduled snapshot (proxy unreachable)' : 'scheduled snapshot';
+    let txt;
+    if (src && open) {  // how old the freshest price in the data actually is, vs. when we fetched it
+      const lag = Math.max(0, Math.round((Date.now() / 1000 - src) / 60));
+      txt = `Charts as of ${tIST(src)} IST (${lag < 1 ? 'live' : lag + ' min old'}) · fetched ${tIST(ep)} · ${via}`;
+    } else if (src) {
+      txt = `Last prices ${tIST(src)} IST, ${dIST(src)} · fetched ${ago} · ${via}`;
+    } else {
+      txt = `Snapshot ${tIST(ep)} IST · ${dIST(ep)} · updated ${ago} · ${via}`;
+    }
+    as.textContent = txt + (snap.demo ? ' · DEMO DATA' : '');
   }
 
   /* ---------- scales ---------- */

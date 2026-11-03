@@ -1,0 +1,9 @@
+name = "market-pulse-proxy"
+main = "src/index.js"
+compatibility_date = "2025-01-01"
+
+[vars]
+# Origin allowed to call the Worker from a browser. Use your Pages origin.
+ALLOW_ORIGIN = "https://deep4footprints-blip.github.io"
+# Edge cache lifetime in seconds. Lower = fresher but more upstream load.
+CACHE_TTL = "30"

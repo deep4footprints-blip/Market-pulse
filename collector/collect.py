@@ -394,6 +394,9 @@ def main():
     snapshot = {
         "generatedAt": now.isoformat(timespec="seconds"),
         "generatedEpoch": int(now.timestamp()),
+        # Last-trade time from Yahoo (5-min bars are stamped at bar *start*, which would overstate age).
+        "sourceEpoch": (headline.get("nifty") or {}).get("time") or (series.get("nifty") or [[None]])[-1][0],
+        "via": "actions",
         "marketStatus": status,
         "headline": headline,
         "series": series,
