@@ -1,0 +1,48 @@
+name: Collect and deploy
+
+on:
+  schedule:
+    # Every 5 min, Mon-Fri, 03:00-10:59 UTC = 08:30-16:29 IST (covers 09:15-15:30 trading hours)
+    - cron: "*/5 3-10 * * 1-5"
+    # One run after the close to capture final prices
+    - cron: "45 11 * * 1-5"
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never cancel a deploy half way; the next run simply queues behind it.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Collect market snapshot
+        # Exits non-zero if nothing could be fetched, which skips the deploy
+        # and leaves the last good snapshot live.
+        run: python collector/collect.py docs/data/snapshot.json
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

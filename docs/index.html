@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>Market Pulse — Intraday</title>
+<meta name="description" content="Intraday snapshot of Nifty, Sensex, broad and sectoral indices, and top movers on NSE and BSE.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Instrument+Serif&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="mast">
+    <div class="mast-row">
+      <h1 class="brand">Market <em>Pulse</em></h1>
+      <nav class="nav" aria-label="Sections">
+        <a href="#overview" class="on">Overview</a>
+        <a href="#indices">Indices</a>
+        <a href="#sectors">Sectors</a>
+        <a href="#movers">Movers</a>
+        <a href="#breadth">Breadth</a>
+      </nav>
+    </div>
+    <div class="meta-row">
+      <span id="status" class="badge"><i class="dot"></i><span>Loading</span></span>
+      <span id="asof" class="muted"></span>
+      <span class="spacer"></span>
+      <button id="refresh" class="btn" type="button">Refresh</button>
+    </div>
+  </header>
+
+  <main>
+    <section id="overview" class="sec">
+      <div id="heads" class="heads"></div>
+      <div class="chart-head">
+        <div class="tabs" id="chart-tabs" role="tablist"></div>
+        <span class="muted" id="chart-meta"></span>
+      </div>
+      <div id="chart" class="chart" aria-label="Intraday chart"></div>
+      <p id="read" class="read"></p>
+    </section>
+
+    <section id="indices" class="sec">
+      <div class="sec-h"><h2>Broad market</h2><span class="muted">NSE · BSE</span></div>
+      <div class="scroll"><table id="t-broad" class="tbl"></table></div>
+    </section>
+
+    <section id="sectors" class="sec">
+      <div class="sec-h"><h2>Sectoral indices</h2><span class="muted" id="sec-meta"></span></div>
+      <div id="sector-bars" class="bars"></div>
+      <div class="scroll"><table id="t-sector" class="tbl"></table></div>
+      <div class="sec-h sub"><h2>Thematic</h2><span class="muted">top and bottom</span></div>
+      <div class="scroll"><table id="t-thematic" class="tbl"></table></div>
+    </section>
+
+    <section id="movers" class="sec">
+      <div class="sec-h"><h2>Stock movers</h2><span class="muted">NIFTY 500 universe</span></div>
+      <div class="tabs" id="mover-tabs" role="tablist"></div>
+      <div class="scroll"><table id="t-movers" class="tbl"></table></div>
+    </section>
+
+    <section id="breadth" class="sec">
+      <div class="sec-h"><h2>Breadth &amp; industries</h2><span class="muted" id="breadth-meta"></span></div>
+      <div id="breadth-body"></div>
+      <div class="sec-h sub"><h2>Industry pulse</h2><span class="muted">average move, NIFTY 500 stocks</span></div>
+      <div id="industry-bars" class="bars"></div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <div id="diag" class="muted"></div>
+    <p class="muted">Public market data, usually delayed by a few minutes. Figures can differ from exchange terminals.
+      Auto-generated commentary is descriptive, not a recommendation. Not investment advice.</p>
+  </footer>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
